@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Grab your exclusive gaming coupon and stay updated on our latest events!">
+    <title>Claim Your Coupon & Event Info | [Your Business Name]</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0a0f24;
+            color: #f4f4f9;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .hero-section {
+            height: 100vh;
+            background: linear-gradient(180deg, rgba(10,15,36,0.9), rgba(10,15,36,0.7)), url('gaming-bg.jpg') no-repeat center center/cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+        .hero-section h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 0px 4px 10px rgba(0, 0, 0, 0.9);
+        }
+        .hero-section p {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+        }
+        .hero-section button {
+            background: #ff007f;
+            color: white;
+            font-size: 1.2em;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+            box-shadow: 0px 4px 15px rgba(255, 0, 127, 0.5);
+        }
+        .hero-section button:hover {
+            background: #e60072;
+            box-shadow: 0px 6px 20px rgba(255, 0, 127, 0.8);
+        }
+        .form-section {
+            background: #161b35;
+            padding: 40px;
+            border-radius: 15px;
+            margin: 40px 20px;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.7);
+        }
+        .form-section h2 {
+            font-family: 'Press Start 2P', cursive;
+            color: #00eaff;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .form-section input, .form-section button {
+            width: 90%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 1em;
+            border: none;
+            border-radius: 10px;
+            outline: none;
+        }
+        .form-section input {
+            background: #1d233d;
+            color: white;
+            box-shadow: inset 0px 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        .form-section button {
+            background: #00eaff;
+            color: #0a0f24;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .form-section button:hover {
+            background: #00c8d6;
+        }
+        .cta-section {
+            margin: 30px 20px;
+        }
+        .cta-section p {
+            font-size: 1.2em;
+            color: #adb5c0;
+        }
+        .cta-section a {
+            color: #00eaff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .cta-section a:hover {
+            text-decoration: underline;
+        }
+        footer {
+            background: #161b35;
+            padding: 20px;
+            text-align: center;
+            color: #adb5c0;
+            margin-top: 40px;
+        }
+        .event-countdown {
+            font-size: 1.5em;
+            color: #ff007f;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="hero-section">
+            <h1>Level Up Your Game</h1>
+            <p>Join our exclusive events and grab exciting coupons for your next visit!</p>
+            <button onclick="document.querySelector('.form-section').scrollIntoView({behavior: 'smooth'})">Claim Now</button>
+        </section>
+
+        <section class="form-section">
+            <h2>Claim Your Gaming Coupon</h2>
+            <form id="couponForm" onsubmit="startGame(event)">
+                <input type="text" name="name" placeholder="Your Name" required>
+                <input type="email" name="email" placeholder="Your Email Address" required>
+                <button type="submit">Get My Coupon</button>
+            </form>
+            <div class="event-countdown" id="countdown">Next Event: Loading...</div>
+        </section>
+
+        <section class="cta-section">
+            <p>Want to stay updated on our epic events? <a href="#">Click here</a> for more info!</p>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 [Your Business Name]. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Countdown Timer
+        function updateCountdown() {
+            const eventDate = new Date("2024-12-25T00:00:00");
+            const now = new Date();
+            const diff = eventDate - now;
+
+            if (diff <= 0) {
+                document.getElementById('countdown').innerText = "The event is live now!";
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown').innerText = `Next Event: ${days} Days, ${hours} Hours, ${minutes} Minutes, ${seconds} Seconds!`;
+        }
+        setInterval(updateCountdown, 1000);
+
+        // Game Trigger
+        function startGame(event) {
+            event.preventDefault();
+            alert("Thanks for signing up! Get ready for the 2D game!");
+            window.location.href = "2d-game.html";
+        }
+    </script>
+</body>
+</html>

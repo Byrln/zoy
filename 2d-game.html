@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aim Master Game with Coins and Leaderboard</title>
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Press Start 2P', cursive; /* Pixel font */
+            background-color: #0a0f24;
+            color: white;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            cursor: url('https://www.svgrepo.com/show/31307/crosshair.svg'), auto; /* Custom crosshair cursor */
+        }
+
+        /* Game Canvas */
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background-color: #161b35;
+            border: 2px solid #00eaff;
+        }
+
+        /* Game Info Display */
+        .game-info {
+            position: absolute;
+            top: 10px;
+            font-size: 20px;
+            color: #00eaff;
+            z-index: 100;
+        }
+        #score {
+            left: 10px;
+        }
+        #time {
+            right: 10px;
+        }
+
+        /* Game Over Message */
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            color: #ff007f;
+            display: none;
+        }
+
+        /* Restart Button */
+        #restartButton {
+            display: none;
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            padding: 10px 20px;
+            background-color: #00eaff;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #restartButton:hover {
+            background-color: #008c99;
+        }
+
+        /* Leaderboard */
+        .tier-list {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            color: #00eaff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            width: 250px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        .tier-list h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .tier-list ul {
+            padding: 0;
+        }
+        .tier-list li {
+            list-style-type: none;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+            }
+            .tier-list {
+                width: 80%;
+                right: 10%;
+                top: 70%;
+            }
+            .game-info {
+                font-size: 16px;
+            }
+            .game-over {
+                font-size: 24px;
+            }
+            #restartButton {
+                top: 70%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tier-list {
+                width: 100%;
+                right: 0;
+                top: 60%;
+            }
+            .game-info {
+                font-size: 14px;
+            }
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+            }
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"> <!-- Pixel Font -->
+</head>
+<body>
+    <div class="game-info" id="score">Score: 0</div>
+    <div class="game-info" id="time">Time: 30</div>
+    <div class="game-over" id="gameOverMessage">Тоглоом дууссан! Таны оноо: <span id="finalScore"></span></div>
+    <button id="restartButton" onclick="restartGame()">Дахин эхлэх</button>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <div class="tier-list" id="leaderboard">
+        <h3>Топ 5 оноо</h3>
+        <ul id="scoreList">
+            <li>1. Player1 - 50</li>
+            <li>2. Player2 - 45</li>
+            <li>3. Player3 - 40</li>
+        </ul>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const leaderboard = document.getElementById('leaderboard');
+        const scoreList = document.getElementById('scoreList');
+        const restartButton = document.getElementById('restartButton');
+    
+        let score = 0;
+        let timeLeft = 30;
+        let gameOver = false;
+        let target = {};
+        let coins = [];
+        let collectedCoins = 0;
+        let gameInterval, timerInterval;
+        let targetHit = false;
+    
+        // Function to start the game
+        function startGame() {
+            score = 0;
+            collectedCoins = 0;
+            timeLeft = 30;
+            gameOver = false;
+            targetHit = false;
+            target = generateTarget();
+            coins = [];
+            generateCoins(5);
+            updateScore();
+            updateTime();
+            startTimer();
+            startGameInterval();
+            restartButton.style.display = 'none';
+            gameOverMessage.style.display = 'none';
+        }
+    
+        // Generate random target
+        function generateTarget() {
+            const x = Math.random() * (canvas.width - 50);
+            const y = Math.random() * (canvas.height - 50);
+            return { x: x, y: y, hit: false };
+        }
+    
+        // Generate random coins with flip state
+        function generateCoins(number) {
+            for (let i = 0; i < number; i++) {
+                coins.push({
+                    x: Math.random() * (canvas.width - 30),
+                    y: Math.random() * (canvas.height - 30),
+                    radius: 15,
+                    flip: false,  // Initially not flipping
+                    flipAngle: 0  // The angle of the flip
+                });
+            }
+        }
+    
+        // Draw target with animation on hit
+        function drawTarget() {
+            ctx.fillStyle = target.hit ? '#ff6347' : '#ff007f'; // Change color on hit
+            ctx.beginPath();
+            ctx.arc(target.x + 25, target.y + 25, 25, 0, Math.PI * 2);
+            ctx.fill();
+            if (target.hit) {
+                target.x += Math.random() * 5 - 2.5; // Slight random movement after hit
+                target.y += Math.random() * 5 - 2.5;
+                target.hit = false; // Reset hit status after animation
+            }
+        }
+    
+        // Draw coins with flip animation
+        function drawCoins() {
+            ctx.fillStyle = '#ffcc00';
+            coins.forEach(coin => {
+                ctx.save();
+                ctx.translate(coin.x + coin.radius, coin.y + coin.radius);
+    
+                // If coin is flipping, animate the flip
+                if (coin.flip) {
+                    coin.flipAngle += 0.05; // Slower flip
+                    if (coin.flipAngle >= Math.PI * 2) {  // Complete flip
+                        coin.flip = false;
+                        coin.flipAngle = 0;
+                    }
+                }
+    
+                ctx.rotate(coin.flipAngle);  // Apply the flip rotation
+                ctx.beginPath();
+                ctx.arc(0, 0, coin.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+    
+        // Update score
+        function updateScore() {
+            scoreDisplay.textContent = `Оноо: ${score}`;
+        }
+    
+        // Update time
+        function updateTime() {
+            timeDisplay.textContent = `Цаг: ${timeLeft}`;
+        }
+    
+        // Start the timer
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (gameOver) return;
+                timeLeft--;
+                updateTime();
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+    
+        // Start the game loop
+        function startGameInterval() {
+            gameInterval = setInterval(() => {
+                if (gameOver) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawTarget();
+                drawCoins();
+            }, 1000 / 60);
+        }
+    
+        // Handle mouse or touch click (shooting)
+        function handleClick(event) {
+            if (gameOver) return;
+    
+            const mouseX = event.clientX - canvas.offsetLeft;
+            const mouseY = event.clientY - canvas.offsetTop;
+    
+            // Check if target was clicked
+            const targetDistance = Math.sqrt(Math.pow(mouseX - (target.x + 25), 2) + Math.pow(mouseY - (target.y + 25), 2));
+            if (targetDistance < 25) {
+                score++;
+                updateScore();
+                target.hit = true;  // Mark the target as hit
+            }
+    
+            // Check if coin was clicked
+            coins.forEach((coin, index) => {
+                const coinDistance = Math.sqrt(Math.pow(mouseX - (coin.x + coin.radius), 2) + Math.pow(mouseY - (coin.y + coin.radius), 2));
+                if (coinDistance < coin.radius) {
+                    coins.splice(index, 1);  // Remove the collected coin
+                    collectedCoins++;
+                    score += 2;  // Each coin gives 2 extra points
+                    updateScore();
+                    generateCoins(1);  // Add one more coin randomly
+                    coin.flip = true;  // Start flipping animation on collection
+                }
+            });
+        }
+    
+        // End the game
+        function endGame() {
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+            gameOver = true;
+            finalScoreDisplay.textContent = score;
+            gameOverMessage.style.display = 'block';
+            restartButton.style.display = 'block';
+            updateLeaderboard();
+        }
+    
+        // Restart the game
+        function restartGame() {
+            startGame();
+        }
+    
+        // Update the leaderboard
+        function updateLeaderboard() {
+            let playerScore = score;
+            let playerName = prompt("Таны нэрийг оруулна уу:") || "Player1";
+    
+            let newScores = [
+                { name: "Player1", score: 50 },
+                { name: "Player2", score: 45 },
+                { name: "Player3", score: 40 },
+                { name: playerName, score: playerScore }
+            ];
+    
+            newScores.sort((a, b) => b.score - a.score);  // Sort by score in descending order
+    
+            // Display top 5 scores
+            scoreList.innerHTML = '';
+            newScores.slice(0, 5).forEach(player => {
+                const li = document.createElement('li');
+                li.textContent = `${player.name} - ${player.score}`;
+                scoreList.appendChild(li);
+            });
+        }
+    
+        // Event listener for mouse or touch click
+        canvas.addEventListener('click', handleClick);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleClick(e.touches[0]);
+        });
+    
+        // Start the game when the page is loaded
+        window.onload = startGame;
+    </script>
+</body>
+</html>
